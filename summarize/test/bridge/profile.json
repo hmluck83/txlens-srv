@@ -1,0 +1,59 @@
+{
+  "basicInfo": {
+    "baseFee": "15.048122269",
+    "blockNumber": 17491805,
+    "callData": "0xcd5865790000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f63d29b67aabbafa772c51e29dc7a89d391cfa7e000000000000000000000000000000000000000000000000004380663abb80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000000",
+    "debugEnable": true,
+    "errorInfo": "",
+    "eventCount": 2,
+    "feeRecipient": "0xb4c9e4617a16be36b92689b9e07e9f64757c1792",
+    "formatValue": "0.019",
+    "gasLimit": 151346,
+    "gasPrice": "17.548122269",
+    "gasUsed": 125081,
+    "intTxnCount": 3,
+    "internalRevert": false,
+    "internalRevertMessage": "",
+    "isContractCreation": false,
+    "isFlashloan": false,
+    "maxFee": "32.811490698",
+    "nonce": 261,
+    "overwritedBlockNumber": -1,
+    "priorityFee": "2.5",
+    "receiver": "0x2a3dd3eb832af982ec71669e178424b10dca2ede",
+    "revertMessage": "",
+    "sender": "0xf63d29b67aabbafa772c51e29dc7a89d391cfa7e",
+    "simulationEnable": true,
+    "sourceTxnHash": "0x04f9941cf871f8e11e49f53b8c276a9c930db7c0dfd8a42c08687b333c73da49",
+    "status": true,
+    "timestamp": "2023-06-16T10:27:59Z",
+    "transactionFee": "0.002194936681528789",
+    "txnHash": "0x04f9941cf871f8e11e49f53b8c276a9c930db7c0dfd8a42c08687b333c73da49",
+    "txnIndex": 33,
+    "type": 2,
+    "value": "19000000000000000"
+  },
+  "fundFlow": [
+    {
+      "amount": "0.019",
+      "from": "0xf63d29b67aabbafa772c51e29dc7a89d391cfa7e",
+      "id": 1,
+      "isERC1155": false,
+      "isERC721": false,
+      "isReverted": false,
+      "order": 1,
+      "to": "0x2a3dd3eb832af982ec71669e178424b10dca2ede",
+      "token": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  ],
+  "tokenInfos": [
+    {
+      "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      "decimals": 18
+    },
+    {
+      "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "decimals": 18
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+    "labels": [
+        {
+            "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "label": "Ether"
+        },
+        {
+            "address": "0x0000000000000000000000000000000000000000",
+            "label": "Null Address"
+        },
+        {
+            "address": "0x580bda1e7a0cfae92fa7f6c20a3794f169ce3cfb",
+            "label": "TransparentUpgradeableProxy_580b_3cfb"
+        },
+        {
+            "address": "0x0000000000000000000000000000000000000002",
+            "label": "Precompiled"
+        },
+        {
+            "address": "0x0000000000000000000000000000000000000004",
+            "label": "Precompiled"
+        },
+        {
+            "address": "0x2a3dd3eb832af982ec71669e178424b10dca2ede",
+            "label": "Polygon (Matic): zkEVM Bridge"
+        },
+        {
+            "address": "0xbc1ea504fc54d078514efcca1f6860b5219b6bc3",
+            "label": "PolygonZkEVMGlobalExitRoot"
+        },
+        {
+            "address": "0x5ac4182a1dd41aeef465e40b82fd326bf66ab82c",
+            "label": "PolygonZkEVMBridge"
+        },
+        {
+            "address": "0x0000000000000000000000000000000000000001",
+            "label": "Precompiled"
+        },
+        {
+            "address": "0x0000000000000000000000000000000000000003",
+            "label": "Precompiled"
+        }
+    ]
+}
