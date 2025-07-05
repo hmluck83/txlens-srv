@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-
-	"github.com/hmluck83/txlens-srv/schemas"
 )
 
 type payload struct {
@@ -33,7 +31,8 @@ func setHttpHeaders(req *http.Request) {
 	req.Header.Set("User-Agent", "Thunder Client (https://www.thunderclient.com) ")
 }
 
-func FetchTransaction(txhash string) (*schemas.Profile, *schemas.AddressLabels, error) {
+// 트랜잭션의 정보 읽어와야 함, 현재 chainId는 무시 Ethereum으로 고정되나 향후 조정 필요
+func FetchTransaction(txhash string) (*Profile, *AddressLabels, error) {
 	client := &http.Client{}
 
 	payloadBody := &payload{
@@ -61,13 +60,15 @@ func FetchTransaction(txhash string) (*schemas.Profile, *schemas.AddressLabels, 
 	}
 	defer profileResp.Body.Close() // Ensure the response body is closed
 
-	var profile schemas.Profile
+	var profile Profile
 	profileDecoder := json.NewDecoder(profileResp.Body)
 
 	if err := profileDecoder.Decode(&profile); err != nil {
 		return nil, nil, err
 	}
 
+	// Request Address Label
+	bufPayload = bytes.NewBuffer(marshaledPayload)
 	labelReq, err := http.NewRequest("POST", labelURL.String(), bufPayload)
 	if err != nil {
 		return nil, nil, err
@@ -81,7 +82,7 @@ func FetchTransaction(txhash string) (*schemas.Profile, *schemas.AddressLabels, 
 	}
 	defer labelResq.Body.Close()
 
-	var addresslabel schemas.AddressLabels
+	var addresslabel AddressLabels
 	labelDecoder := json.NewDecoder(labelResq.Body)
 
 	if err = labelDecoder.Decode(&addresslabel); err != nil {

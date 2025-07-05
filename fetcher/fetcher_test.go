@@ -14,11 +14,14 @@ func TestFetcher(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log("---- PROFILE -----")
 	t.Log(string(data))
 	data, err = json.Marshal(addressLabel)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log("---- Address Label -----")
+
 	t.Log(string(data))
 
 }

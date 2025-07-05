@@ -1,6 +1,4 @@
-package summarize
-
-import "github.com/hmluck83/txlens-srv/schemas"
+package fetcher
 
 type summuryProfile struct {
 	Sender        string `json:"sender"`
@@ -9,12 +7,12 @@ type summuryProfile struct {
 }
 
 type summury struct {
-	SummuryProfile summuryProfile         `json:"summuryProfile"`
-	FundFlows      []schemas.FundFlow     `json:"fundFlow"`
-	AddressLabel   []schemas.AddressLabel `json:"addressLabel"`
+	SummuryProfile summuryProfile `json:"summuryProfile"`
+	FundFlows      []FundFlow     `json:"fundFlow"`
+	AddressLabel   []AddressLabel `json:"addressLabel"`
 }
 
-func Summarizer(txprofile schemas.Profile, txlabel schemas.AddressLabels) summury {
+func Summarizer(txprofile Profile, txlabel AddressLabels) summury {
 
 	summuryProfileObj := summuryProfile{
 		Sender:        txprofile.BasicInfo.Sender,
@@ -22,7 +20,7 @@ func Summarizer(txprofile schemas.Profile, txlabel schemas.AddressLabels) summur
 		RevertMessage: txprofile.BasicInfo.RevertMessage,
 	}
 
-	var addresslabels []schemas.AddressLabel
+	var addresslabels []AddressLabel
 
 	for _, val := range txlabel.Labels {
 		if (val.Label != "Null Address") && (val.Label != "Precompiled") {

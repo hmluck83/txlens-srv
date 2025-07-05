@@ -22,9 +22,10 @@ type GraphData struct {
 }
 
 type ResponsePayload struct {
-	Status      int       `json:"status"`
-	Description string    `json:"description"`
-	GraphData   GraphData `json:"graphdata"`
+	StatusMessage string    `json:"statusMessage"`
+	Status        int       `json:"status"`
+	Description   string    `json:"description"`
+	GraphData     GraphData `json:"graphdata"`
 }
 
 type NodeData struct {
@@ -147,9 +148,10 @@ func proccessHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responsePayload := ResponsePayload{
-		Status:      1,
-		Description: "",
-		GraphData:   graphData,
+		StatusMessage: "success",
+		Status:        1,
+		Description:   "",
+		GraphData:     graphData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -161,16 +163,13 @@ func proccessHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// 확장에서 접근을 위해 CORS를 허용
+// TODO: Chainalysis, TRM, Trevse?? 로  URL 제ㅈ
 func enableCORS(w *http.ResponseWriter) {
 	// 모든 Origin을 허용: 개발 단계에서만 사용하고, 운영 환경에서는 특정 Origin으로 제한해야 합니다.
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-
 	// 허용할 HTTP 메서드
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-
 	// 허용할 헤더 (프론트엔드에서 커스텀 헤더를 보낼 경우 여기에 추가해야 함)
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-	// 자격 증명(쿠키, HTTP 인증 등)을 포함한 요청 허용 여부
-	// (*w).Header().Set("Access-Control-Allow-Credentials", "true") // Access-Control-Allow-Origin이 '*'일 때는 사용할 수 없음
 }

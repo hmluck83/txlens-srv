@@ -1,12 +1,10 @@
-package summarize
+package fetcher
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/hmluck83/txlens-srv/schemas"
 )
 
 func Test_SummarizerAll(t *testing.T) {
@@ -19,8 +17,8 @@ func Test_SummarizerAll(t *testing.T) {
 		addressLabelPath := filepath.Join("test", entry.Name(), "address-label.json")
 		profilePath := filepath.Join("test", entry.Name(), "profile.json")
 
-		var profileObj schemas.Profile
-		var addressLabelObj schemas.AddressLabels
+		var profileObj Profile
+		var addressLabelObj AddressLabels
 
 		addressLabelString, err := os.ReadFile(addressLabelPath)
 		if err != nil {
@@ -54,4 +52,18 @@ func Test_SummarizerAll(t *testing.T) {
 		t.Log(string(jsonString))
 
 	}
+}
+
+func Test_FetchAndSummury(t *testing.T) {
+	profile, addressLabel, err := FetchTransaction("0x7dd3733b3daa58222376221346f529a8da42f4b8389b639b718c3661e276381d")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	obj := Summarizer(*profile, *addressLabel)
+	jsonString, err := json.Marshal(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(jsonString))
 }

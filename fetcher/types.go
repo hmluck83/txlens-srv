@@ -1,8 +1,9 @@
 // 외부 RPC-Node 혹은 Explorer의 Response schema 정의
-package schemas
+package fetcher
 
 import "time"
 
+// BlockSec Json Response
 type Profile struct {
 	BasicInfo struct {
 		BaseFee               string    `json:"baseFee"`
@@ -38,8 +39,9 @@ type Profile struct {
 		Type                  int       `json:"type"`
 		Value                 string    `json:"value"`
 	} `json:"basicInfo"`
-	FundFlows  []FundFlow  `json:"fundFlow"`
-	TokenInfos []TokenInfo `json:"tokenInfos"`
+	SecurityEvents SecurityEvent `json:"securityEvent,omitempty"`
+	FundFlows      []FundFlow    `json:"fundFlow"`
+	TokenInfos     []TokenInfo   `json:"tokenInfos"`
 }
 
 type FundFlow struct {
@@ -66,4 +68,14 @@ type AddressLabels struct {
 type AddressLabel struct {
 	Address string `json:"address"`
 	Label   string `json:"label"`
+}
+type SecurityEvent struct {
+	ID          int    `json:"id"`
+	Project     string `json:"project"`
+	ProjectLogo string `json:"projectLogo"`
+	Loss        int    `json:"loss"`
+	Media       string `json:"media"`
+	RootCause   string `json:"rootCause"`
+	Poc         string `json:"poc"`
+	Rescued     int    `json:"rescued"`
 }
