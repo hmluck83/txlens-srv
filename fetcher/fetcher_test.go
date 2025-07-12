@@ -2,6 +2,8 @@ package fetcher
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -23,5 +25,32 @@ func TestFetcher(t *testing.T) {
 	t.Log("---- Address Label -----")
 
 	t.Log(string(data))
+}
 
+func TestCreateSample(t *testing.T) {
+	caseName := "ChaingenowDeposit_1"
+	caseTx := "0x81a2341ca06e1b72ea35cd812380e2cf8d312ce79c1827a76c18623d31638237"
+	if err := os.Mkdir(filepath.Join("test", caseName), os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	profile, addressLabel, err := FetchTransaction(caseTx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log((profile))
+
+	profilestring, err := json.Marshal(profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	os.WriteFile(filepath.Join("test", caseName, "profile.json"), profilestring, 0644)
+
+	addressObj, err := json.Marshal(addressLabel)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	os.WriteFile(filepath.Join("test", caseName, "address-label.json"), addressObj, 0644)
 }

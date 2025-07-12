@@ -45,7 +45,6 @@ func Test_SummarizerAll(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		entry.Name()
 
 		os.WriteFile(entry.Name()+".json", jsonString, 0644)
 
