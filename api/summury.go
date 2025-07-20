@@ -16,7 +16,7 @@ import (
 // Transaction Summury를 작성 API
 func summuryHandler(w http.ResponseWriter, r *http.Request) {
 
-	// TODO: Logger  적용
+	// TODO: Logger  적용, Ethereum Transaction 일 때만, 사용하도록 설정
 	// CORS 헤더 설정
 	enableCORS(&w)
 
@@ -54,7 +54,14 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lc := llmclient.NewLLMClient()
+	// TODO: client 생성 위치? 매번 HTTP Requests?????
+	lc, err := llmclient.NewLLMClient(context.Background())
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	llmresponse, err := lc.Request(context.Background(), llmclient.GetScaffoldTemplate(), string(summarizedString))
 
 	if err != nil {
@@ -93,7 +100,7 @@ func buildGraphData(profile *fetcher.Profile, addressLabels *fetcher.AddressLabe
 		labelMap[val.Address] = val.Label
 	}
 
-	// node를 중복 없이 저장할 필요가 있지만 Set이 없기 때문에 Map으로 대ㅈ
+	// node를 중복 없이 저장할 필요가 있지만 Set이 없기 때문에 Map으로 대체
 	nodeMap := make(map[string]struct{})
 	edges := []EdgeData{}
 

@@ -21,11 +21,33 @@ func Test_LLMrequest(t *testing.T) {
 	inquiry, err := os.ReadFile("test/zkBridgeTransaction.txt")
 
 	// Run LLM
-	l := NewLLMClient()
+	l, err := NewLLMClient(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	result, err := l.Request(context.Background(), tmpl, string(inquiry))
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(*result)
+}
+
+func Test_classification(t *testing.T) {
+	Loadenv()
+
+	l, err := NewLLMClient(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	inquiry, _ := os.ReadFile("test/zkBridgeTransaction.txt")
+
+	result, err := l.Classifier(context.Background(), classifierTemplate, string(inquiry), ClassificationEnum)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	t.Log(*result)
 
 }
