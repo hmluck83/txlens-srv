@@ -57,7 +57,7 @@ func NewLLMClient(ctx context.Context) (*LLMClient, error) {
 }
 
 // Build Summary Request
-func (l *LLMClient) Request(ctx context.Context, instruct string, inquiry string) (*string, error) {
+func (l *LLMClient) Summary(ctx context.Context, instruct string, inquiry string) (*string, error) {
 
 	zeroPointer := int32(0)
 

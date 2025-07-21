@@ -26,7 +26,7 @@ func Test_LLMrequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := l.Request(context.Background(), tmpl, string(inquiry))
+	result, err := l.Summary(context.Background(), tmpl, string(inquiry))
 	if err != nil {
 		t.Fatal(err)
 	}

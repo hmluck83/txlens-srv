@@ -36,7 +36,7 @@ func FetchTransaction(txhash string) (*Profile, *AddressLabels, error) {
 	client := &http.Client{}
 
 	payloadBody := &payload{
-		ChainID: 1,
+		ChainID: 1, // NOTE: check ChainID
 		TxnHash: txhash,
 		Blocked: false,
 	}

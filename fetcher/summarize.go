@@ -1,37 +1,69 @@
 package fetcher
 
-type summuryProfile struct {
+import (
+	"fmt"
+)
+
+type summaryProfile struct {
 	Sender        string `json:"sender"`
 	Status        bool   `json:"status"`
 	RevertMessage string `json:"revertMessage"`
 }
 
-type summury struct {
-	SummuryProfile summuryProfile `json:"summuryProfile"`
+type summary struct {
+	SummaryProfile summaryProfile `json:"summaryProfile"`
 	FundFlows      []FundFlow     `json:"fundFlow"`
-	AddressLabel   []AddressLabel `json:"addressLabel"`
+	// AddressLabel   []AddressLabel `json:"addressLabel"`
 }
 
-func Summarizer(txprofile Profile, txlabel AddressLabels) summury {
+// blocksec으로 부터 Profile과 Address Label을 질의 형식에 맞게 정규화
+func Summarizer(txprofile Profile, txlabel AddressLabels) summary {
 
-	summuryProfileObj := summuryProfile{
+	labelMap := make(map[string]string)
+
+	for _, val := range txlabel.Labels {
+		if (val.Label != "Null Address") && (val.Label != "Precompiled") {
+			labelMap[val.Address] = val.Label
+		}
+	}
+
+	summaryProfileObj := summaryProfile{
 		Sender:        txprofile.BasicInfo.Sender,
 		Status:        txprofile.BasicInfo.Status,
 		RevertMessage: txprofile.BasicInfo.RevertMessage,
 	}
 
-	var addresslabels []AddressLabel
+	for idx := range txprofile.FundFlows {
+		txprofile.FundFlows[idx].Token = labelMap[txprofile.FundFlows[idx].Token]
 
-	for _, val := range txlabel.Labels {
-		if (val.Label != "Null Address") && (val.Label != "Precompiled") {
-			addresslabels = append(addresslabels, val)
+		if val, exist := labelMap[txprofile.FundFlows[idx].From]; exist {
+			txprofile.FundFlows[idx].From = fmt.Sprintf("%s(%s)", val, shortenAddress(txprofile.FundFlows[idx].From))
+		} else {
+			txprofile.FundFlows[idx].From = shortenAddress(txprofile.FundFlows[idx].From)
+		}
+
+		if val, exist := labelMap[txprofile.FundFlows[idx].To]; exist {
+			txprofile.FundFlows[idx].To = fmt.Sprintf("%s(%s)", val, shortenAddress(txprofile.FundFlows[idx].To))
+		} else {
+			txprofile.FundFlows[idx].To = shortenAddress(txprofile.FundFlows[idx].To)
 		}
 	}
-	summuryObj := summury{
-		SummuryProfile: summuryProfileObj,
+
+	summaryObj := summary{
+		SummaryProfile: summaryProfileObj,
 		FundFlows:      txprofile.FundFlows,
-		AddressLabel:   addresslabels,
 	}
 
-	return summuryObj
+	return summaryObj
+}
+
+// TODO: Util package로 정리해서 api/summary.go와 정리
+
+// Address 주소 줄이기
+func shortenAddress(address string) string {
+	if len(address) < 11 {
+		return address
+	} else {
+		return fmt.Sprintf("%s...%s", address[0:7], address[len(address)-3:])
+	}
 }
