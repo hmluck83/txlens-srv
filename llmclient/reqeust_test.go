@@ -2,9 +2,11 @@ package llmclient
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
+	"github.com/hmluck83/txlens-srv/fetcher"
 	"github.com/joho/godotenv"
 )
 
@@ -49,5 +51,36 @@ func Test_classification(t *testing.T) {
 	}
 
 	t.Log(*result)
+}
 
+func Test_classificationWithFetch(t *testing.T) {
+	Loadenv()
+
+	profile, addresslabes, err := fetcher.FetchTransaction("0x348b46ca8d967ce1d1e74e866911c47a99796cec1e97c92cd2a95faea15a0745")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	summaryObj := fetcher.SummarizerClassification(*profile, *addresslabes)
+	summanryString, err := json.Marshal(summaryObj)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(string(summanryString))
+
+	l, err := NewLLMClient(context.Background())
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := l.Classifier(context.Background(), classifierTemplate, string(summanryString), ClassificationEnum)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(*result)
 }

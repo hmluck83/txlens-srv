@@ -100,6 +100,12 @@ func (l *LLMClient) Classifier(ctx context.Context, instruct string, inquiry str
 			Format: "enum",
 			Enum:   schemas,
 		},
+		// Google Search Option의 반환 값은 항상 동일한듯?
+		// Tools: []*genai.Tool{
+		// 	{
+		// 		GoogleSearch: &genai.GoogleSearch{},
+		// 	},
+		// },
 	}
 
 	result, err := l.geminiClient.Models.GenerateContent(
