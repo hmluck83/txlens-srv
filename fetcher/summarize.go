@@ -10,10 +10,16 @@ type summaryProfile struct {
 	RevertMessage string `json:"revertMessage"`
 }
 
+// 향후 Summary Desc로 대체 됨
 type summary struct {
 	SummaryProfile summaryProfile `json:"summaryProfile"`
 	FundFlows      []FundFlow     `json:"fundFlow"`
 	// AddressLabel   []AddressLabel `json:"addressLabel"`
+}
+
+type summaryDesc struct {
+	SummaryProfile summaryProfile `json:"summaryProfile"`
+	FundDesc       []FundDesc     `json:"fundDesc"`
 }
 
 // blocksec으로 부터 Profile과 Address Label을 질의 형식에 맞게 정규화
@@ -61,7 +67,7 @@ func Summarizer(txprofile Profile, txlabel AddressLabels) summary {
 blocksec으로 부터 Profile과 Address Label을 질의 형식에 맞게 정규화
 Classification 용도에 맞도록 수정
 */
-func SummarizerClassification(txprofile Profile, txlabel AddressLabels) summary {
+func SummarizerClassification(txprofile Profile, txlabel AddressLabels) summaryDesc {
 
 	labelMap := make(map[string]string)
 
@@ -77,21 +83,39 @@ func SummarizerClassification(txprofile Profile, txlabel AddressLabels) summary 
 		RevertMessage: txprofile.BasicInfo.RevertMessage,
 	}
 
-	for idx := range txprofile.FundFlows {
-		txprofile.FundFlows[idx].Token = labelMap[txprofile.FundFlows[idx].Token]
+	// 변수 네이밍  일관성 없네 진짜
+	fundDecsSlice := []FundDesc{}
 
-		if val, exist := labelMap[txprofile.FundFlows[idx].From]; exist {
-			txprofile.FundFlows[idx].From = fmt.Sprintf("%s(%s)", val, txprofile.FundFlows[idx].From)
+	for _, ff := range txprofile.FundFlows {
+		fundDecs := FundDesc{
+			Amount:    ff.Amount,
+			From:      ff.From,
+			ID:        ff.ID,
+			IsERC1155: ff.IsERC1155,
+			IsERC721:  ff.IsERC721,
+			Order:     ff.Order,
+			To:        ff.To,
+			Token:     labelMap[ff.Token],
 		}
 
-		if val, exist := labelMap[txprofile.FundFlows[idx].To]; exist {
-			txprofile.FundFlows[idx].To = fmt.Sprintf("%s(%s)", val, txprofile.FundFlows[idx].To)
+		if val, exist := labelMap[ff.From]; exist {
+			fundDecs.FromLabel = fmt.Sprintf("%s(%s)", val, shortenAddress(ff.From))
+		} else {
+			fundDecs.FromLabel = shortenAddress(ff.From)
 		}
+
+		if val, exist := labelMap[ff.To]; exist {
+			fundDecs.ToLabel = fmt.Sprintf("%s(%s)", val, shortenAddress(ff.To))
+		} else {
+			fundDecs.ToLabel = shortenAddress(ff.To)
+		}
+
+		fundDecsSlice = append(fundDecsSlice, fundDecs)
 	}
 
-	summaryObj := summary{
+	summaryObj := summaryDesc{
 		SummaryProfile: summaryProfileObj,
-		FundFlows:      txprofile.FundFlows,
+		FundDesc:       fundDecsSlice,
 	}
 
 	return summaryObj

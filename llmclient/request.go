@@ -1,18 +1,23 @@
 package llmclient
 
 import (
+	"bytes"
 	"context"
+	"embed"
 	_ "embed"
 	"os"
 
 	"google.golang.org/genai"
 )
 
-//go:embed prompts/templates/scaffold.tmpl
-var scaffoldTemplate string
+//go:embed prompts/templates
+var templates embed.FS
 
-//go:embed prompts/templates/classification.txt
-var classifierTemplate string
+var summarySwapPrompt string
+var summaryDepositCex string
+var summaryWithdrawCex string
+var summarySimpleTrans string
+var classifierPrompt string
 
 var ClassificationEnum []string
 
@@ -23,10 +28,58 @@ func init() {
 		"Simple_Transfer",
 		"Swap_Transaction",
 	}
-}
 
-func GetScaffoldTemplate() string {
-	return scaffoldTemplate
+	// build template strings
+	personaSummary, _ := templates.ReadFile("prompts/templates/persona_summary.tmpl")
+	personaClassification, _ := templates.ReadFile("prompts/templates/persona_classification.tmpl")
+
+	instructionSummary, _ := templates.ReadFile("prompts/templates/instruction_summary.tmpl")
+	instructionClassification, _ := templates.ReadFile("prompts/templates/instruction_classification.tmpl")
+
+	transactionTemplate, _ := templates.ReadFile("prompts/templates/transaction_template.tmpl")
+
+	infoSwap, _ := templates.ReadFile("prompts/templates/info_swap.tmpl")
+	infoDepositCex, _ := templates.ReadFile("prompts/templates/info_depositCEX.tmpl")
+	infoWithdrawCex, _ := templates.ReadFile("prompts/templates/info_withdrawCEX.tmpl")
+
+	// TODO: 분명히 개선될거 같은데
+	cp := bytes.Buffer{}
+	cp.Write(personaClassification)
+	cp.Write(transactionTemplate)
+	cp.Write(instructionClassification)
+
+	classifierPrompt = cp.String()
+
+	swapPrompt := bytes.Buffer{}
+	swapPrompt.Write(personaSummary)
+	swapPrompt.Write(transactionTemplate)
+	swapPrompt.Write(instructionSummary)
+	swapPrompt.Write(infoSwap)
+
+	summarySwapPrompt = swapPrompt.String()
+
+	depositCex := bytes.Buffer{}
+	depositCex.Write(personaSummary)
+	depositCex.Write(transactionTemplate)
+	depositCex.Write(instructionSummary)
+	depositCex.Write(infoDepositCex)
+
+	summaryDepositCex = depositCex.String()
+
+	withdrawCex := bytes.Buffer{}
+	withdrawCex.Write(personaSummary)
+	withdrawCex.Write(transactionTemplate)
+	withdrawCex.Write(instructionSummary)
+	withdrawCex.Write(infoWithdrawCex)
+
+	summaryWithdrawCex = withdrawCex.String()
+
+	simpleTrans := bytes.Buffer{}
+	simpleTrans.Write(personaSummary)
+	simpleTrans.Write(transactionTemplate)
+	simpleTrans.Write(instructionSummary)
+
+	summarySimpleTrans = simpleTrans.String()
 }
 
 type LLMClient struct {
@@ -57,12 +110,12 @@ func NewLLMClient(ctx context.Context) (*LLMClient, error) {
 }
 
 // Build Summary Request
-func (l *LLMClient) Summary(ctx context.Context, instruct string, inquiry string) (*string, error) {
+func (l *LLMClient) Summary(ctx context.Context, prompt string, inquiry string) (*string, error) {
 
 	zeroPointer := int32(0)
 
 	config := &genai.GenerateContentConfig{
-		SystemInstruction: genai.NewContentFromText(instruct, genai.RoleUser),
+		SystemInstruction: genai.NewContentFromText(prompt, genai.RoleUser),
 		ThinkingConfig: &genai.ThinkingConfig{
 			ThinkingBudget: &zeroPointer,
 		},
@@ -85,12 +138,12 @@ func (l *LLMClient) Summary(ctx context.Context, instruct string, inquiry string
 }
 
 // TODO !TODO
-func (l *LLMClient) Classifier(ctx context.Context, instruct string, inquiry string, schemas []string) (*string, error) {
+func (l *LLMClient) Classifier(ctx context.Context, inquiry string) (*string, error) {
 
 	zeroPointer := int32(0)
 
 	config := &genai.GenerateContentConfig{
-		SystemInstruction: genai.NewContentFromText(instruct, genai.RoleUser),
+		SystemInstruction: genai.NewContentFromText(classifierPrompt, genai.RoleUser),
 		ThinkingConfig: &genai.ThinkingConfig{
 			ThinkingBudget: &zeroPointer,
 		},
@@ -98,9 +151,9 @@ func (l *LLMClient) Classifier(ctx context.Context, instruct string, inquiry str
 		ResponseSchema: &genai.Schema{
 			Type:   "STRING",
 			Format: "enum",
-			Enum:   schemas,
+			Enum:   ClassificationEnum,
 		},
-		// Google Search Option의 반환 값은 항상 동일한듯?
+		// Google Search Option하고 Structured Output은 동시에 쓸 수 없는 듯 한번 더 갔다오???
 		// Tools: []*genai.Tool{
 		// 	{
 		// 		GoogleSearch: &genai.GoogleSearch{},
@@ -122,4 +175,20 @@ func (l *LLMClient) Classifier(ctx context.Context, instruct string, inquiry str
 	text := result.Text()
 
 	return &text, nil
+}
+
+func (l *LLMClient) GetSummaryPrompt(txtype string) string {
+	switch txtype {
+	case "Withdraw_From_CentralizedExchange":
+		return summaryWithdrawCex
+	case "Deposit_To_CentralizedExchange":
+		return summaryDepositCex
+	case "Simple_Transfer":
+		return summarySimpleTrans
+	case "Swap_Transaction":
+		return summarySwapPrompt
+	}
+
+	return "" // Never
+
 }

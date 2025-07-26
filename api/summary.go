@@ -80,7 +80,7 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println(string(summarizedString))
 
-	llmresponse, err := lc.Summary(context.Background(), llmclient.GetScaffoldTemplate(), string(summarizedString))
+	llmresponse, err := lc.Summary(context.Background(), string(summarizedString))
 
 	if err != nil {
 		log.Printf("Error on generate summary %s\n", err.Error())

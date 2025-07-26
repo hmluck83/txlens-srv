@@ -17,9 +17,6 @@ func Loadenv() {
 func Test_LLMrequest(t *testing.T) {
 	Loadenv()
 
-	// Load Prompt Template
-	tmpl := GetScaffoldTemplate()
-
 	inquiry, err := os.ReadFile("test/zkBridgeTransaction.txt")
 
 	// Run LLM
@@ -28,7 +25,9 @@ func Test_LLMrequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, err := l.Summary(context.Background(), tmpl, string(inquiry))
+	prompt := l.GetSummaryPrompt("Deposit_To_CentralizedExchange")
+
+	result, err := l.Summary(context.Background(), prompt, string(inquiry))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +44,7 @@ func Test_classification(t *testing.T) {
 
 	inquiry, _ := os.ReadFile("test/zkBridgeTransaction.txt")
 
-	result, err := l.Classifier(context.Background(), classifierTemplate, string(inquiry), ClassificationEnum)
+	result, err := l.Classifier(context.Background(), string(inquiry))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +55,7 @@ func Test_classification(t *testing.T) {
 func Test_classificationWithFetch(t *testing.T) {
 	Loadenv()
 
-	profile, addresslabes, err := fetcher.FetchTransaction("0x348b46ca8d967ce1d1e74e866911c47a99796cec1e97c92cd2a95faea15a0745")
+	profile, addresslabes, err := fetcher.FetchTransaction("0x04f9941cf871f8e11e49f53b8c276a9c930db7c0dfd8a42c08687b333c73da49")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,14 +68,13 @@ func Test_classificationWithFetch(t *testing.T) {
 	}
 
 	t.Log(string(summanryString))
-
 	l, err := NewLLMClient(context.Background())
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	result, err := l.Classifier(context.Background(), classifierTemplate, string(summanryString), ClassificationEnum)
+	result, err := l.Classifier(context.Background(), string(summanryString))
 
 	if err != nil {
 		t.Fatal(err)

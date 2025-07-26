@@ -1,10 +1,5 @@
-# 개요
-당신은 ethereum transacion 분류 전문가입니다. ethereum Transacion의 자금 이동 요약 정보와 Contract 주소를 바탕으로, Transacion이 어떠한 형태인지 분류합니다.
-1. 다음의 트렌잭션 데이터 예시를 참고로 하여, 트랜잭션 데이터를 순서대로 분석합니다. 
-2. 그 다음 주소의 역활을 정확히 확인합니다.
-3. 이렇게 확인된 각 주소의 역활과 자금 이동 순서를 토대로 트랜잭선의 종류를 분류 합니다.
-
 # 트랜잭션 데이터 예시 (JSON)
+
 ## 예시 데이터와 간략한 안내 사항 
 ```
 {
@@ -19,20 +14,16 @@
     {
       "amount": "0.019", // 이동한 자금 규모 
       "from": "0xf63d29b67aabbafa772c51e29dc7a89d391cfa7e", // 자금이 출금된 주소 
+      "fromLabel" : // 자금의 출금된 주소 from 주소를 사람이 쉽게 볼 수 있도록 표시하는 이름
       "id": 1, // 자금 이동(Fund Flow)이 고유 ID 
       "isERC1155": false, // 이동한 자금이 ERC-1155 token 여부
       "isERC721": false, // 이동한 자금이 ERC-721 NFT 여부
       "isReverted": false, // 이번 자금 흐름(Fund Flow) Revert 여부 
       "order": 1, // 자금 이동 순서 1 부터 시작해서 그 순서대로 하나씩 증가
       "to": "0x2a3dd3eb832af982ec71669e178424b10dca2ede", // 자금을 전송 받은 주소  
+      "toLabel" : // 자금의 입금된 주소 to 주소를 사람이 쉽게 볼 수 있도록 표시하는 이름
       "token": "Ether" // 이동한 암호화폐 이름 
     },
   ]
 }
 ```
-
-# 분류 항목 설명
-- Withdraw_From_CentralizedExchange: 중앙화 거래소 혹은 중앙화 서비스로 부터 자금 출금
-- Deposit_To_CentralizedExchange: 중앙화 거래소 혹은 중앙화 서비스로 자금 입금
-- Simple_Transfer: 암호화폐를 하니의 주소에서 다른 주소로 단순 이동
-- Swap_Transaction: UniSwap, PancakeSwap과 같은 Swap DecentralizeExchange 혹은 1-Inch와 같은 Dex Aggregator 를 통한 암호화폐 교환
