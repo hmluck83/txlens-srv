@@ -69,6 +69,16 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Transaction Summary is :\n%s\n", intendJSON.String())
 
+	// 급하니  동일한 코드  두번호출
+	summarizedDescObj := fetcher.SummarizerClassification(*profile, *addressLabels)
+
+	summarizedDescString, err := json.Marshal(summarizedDescObj)
+	if err != nil {
+		log.Printf("On summuring transaction has error")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	// NOTE: client 생성 위치? 매번 HTTP Requests?
 	// 아직 접속이 많이 없어 고려하지 않도록 한다
 	lc, err := llmclient.NewLLMClient(context.Background())
@@ -78,9 +88,16 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(string(summarizedString))
+	txType, err := lc.Classifier(context.Background(), string(summarizedDescString))
+	if err != nil {
+		log.Printf("Error on generate summary %s\n", err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
-	llmresponse, err := lc.Summary(context.Background(), string(summarizedString))
+	prompt := lc.GetSummaryPrompt(*txType)
+
+	llmresponse, err := lc.Summary(context.Background(), prompt, string(summarizedString))
 
 	if err != nil {
 		log.Printf("Error on generate summary %s\n", err.Error())
