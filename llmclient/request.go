@@ -18,6 +18,7 @@ var summaryDepositCex string
 var summaryWithdrawCex string
 var summarySimpleTrans string
 var classifierPrompt string
+var addressPrompt string
 
 var ClassificationEnum []string
 
@@ -41,6 +42,9 @@ func init() {
 	infoSwap, _ := templates.ReadFile("prompts/templates/info_swap.tmpl")
 	infoDepositCex, _ := templates.ReadFile("prompts/templates/info_depositCEX.tmpl")
 	infoWithdrawCex, _ := templates.ReadFile("prompts/templates/info_withdrawCEX.tmpl")
+
+	at, _ := templates.ReadFile("prompts/templates/address_prompt.tmpl")
+	addressPrompt = string(at)
 
 	// TODO: 분명히 개선될거 같은데
 	cp := bytes.Buffer{}
@@ -153,17 +157,47 @@ func (l *LLMClient) Classifier(ctx context.Context, inquiry string) (*string, er
 			Format: "enum",
 			Enum:   ClassificationEnum,
 		},
-		// Google Search Option하고 Structured Output은 동시에 쓸 수 없는 듯 한번 더 갔다오???
-		// Tools: []*genai.Tool{
-		// 	{
-		// 		GoogleSearch: &genai.GoogleSearch{},
-		// 	},
-		// },
 	}
 
 	result, err := l.geminiClient.Models.GenerateContent(
 		ctx,
 		"gemini-2.5-flash-lite-preview-06-17",
+		genai.Text(inquiry),
+		config,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	text := result.Text()
+
+	return &text, nil
+}
+
+// TODO !TODO
+func (l *LLMClient) AddressPrompting(ctx context.Context, inquiry string) (*string, error) {
+
+	// Config Thinking budget
+	thinkingBudget := int32(1024)
+	temparature := float32(0.3)
+
+	config := &genai.GenerateContentConfig{
+		Temperature:       &temparature,
+		SystemInstruction: genai.NewContentFromText(addressPrompt, genai.RoleUser),
+		ThinkingConfig: &genai.ThinkingConfig{
+			ThinkingBudget: &thinkingBudget,
+		},
+		Tools: []*genai.Tool{
+			{
+				GoogleSearch: &genai.GoogleSearch{},
+			},
+		},
+	}
+
+	result, err := l.geminiClient.Models.GenerateContent(
+		ctx,
+		"gemini-2.5-flash",
 		genai.Text(inquiry),
 		config,
 	)

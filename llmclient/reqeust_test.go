@@ -82,3 +82,20 @@ func Test_classificationWithFetch(t *testing.T) {
 
 	t.Log(*result)
 }
+
+func Test_addressPrompt(t *testing.T) {
+	Loadenv()
+	ctx := context.Background()
+
+	l, err := NewLLMClient(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := l.AddressPrompting(ctx, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(*result)
+}
