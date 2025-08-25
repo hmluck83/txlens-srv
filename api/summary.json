@@ -1,0 +1,20 @@
+{
+    "summaryProfile": {
+        "sender": "0x559432e18b281731c054cd703d4b49872be4ed53",
+        "status": true,
+        "revertMessage": ""
+    },
+    "fundFlow": [
+        {
+            "amount": "115,284.302665",
+            "from": "0x55943...d53",
+            "id": 1,
+            "isERC1155": false,
+            "isERC721": false,
+            "isReverted": false,
+            "order": 1,
+            "to": "0xabb87...ad8",
+            "token": "USDT"
+        }
+    ]
+}

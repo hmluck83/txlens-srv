@@ -1,17 +1,18 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
+	"sync"
 
-	"github.com/hmluck83/txlens-srv/fetcher"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/hmluck83/txlens-srv/llmclient"
+	"github.com/hmluck83/txlens-srv/tracer"
+	"github.com/shopspring/decimal"
 )
 
 // Transaction Summary를 작성 API
@@ -47,34 +48,10 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("New access from %s. Start summary generate\n", r.RemoteAddr)
 	log.Printf("Requested TXid : %s   ChainID: %d\n", reqPayload.Txid, reqPayload.Chainid)
 
-	// Fetch Transaction Infomation
-	profile, addressLabels, err := fetcher.FetchTransaction(reqPayload.Txid)
+	fundFlows, addrLabels, err := tracer.FundFlowFromTx(common.HexToHash(reqPayload.Txid))
+
 	if err != nil {
 		log.Printf("Error in Transaction summary: %s\n", err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	summarizedObj := fetcher.Summarizer(*profile, *addressLabels)
-
-	summarizedString, err := json.Marshal(summarizedObj)
-	if err != nil {
-		log.Printf("On summuring transaction has error")
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	var intendJSON bytes.Buffer
-	json.Indent(&intendJSON, summarizedString, "", "  ")
-
-	log.Printf("Transaction Summary is :\n%s\n", intendJSON.String())
-
-	// 급하니  동일한 코드  두번호출
-	summarizedDescObj := fetcher.SummarizerClassification(*profile, *addressLabels)
-
-	summarizedDescString, err := json.Marshal(summarizedDescObj)
-	if err != nil {
-		log.Printf("On summuring transaction has error")
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +65,31 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	txType, err := lc.Classifier(context.Background(), string(summarizedDescString))
+	// 각 주소의 Asistant Prompt 생성
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var sb strings.Builder
+
+	for keyAddr := range addrLabels {
+		if keyAddr.Cmp(tracer.EthAddress) != 0 {
+			wg.Add(1)
+
+			go func() {
+				defer wg.Done()
+				// 현재 addr Prompt 생성중 에러는 무시
+				addrPrompt, _ := lc.AddressPrompting(context.Background(), keyAddr.Hex())
+
+				mu.Lock()
+				sb.WriteString(*addrPrompt)
+				mu.Unlock()
+			}()
+		}
+	}
+
+	txFlowSummary := flowSummary(&fundFlows, &addrLabels)
+	summarized, err := json.Marshal(txFlowSummary)
+
+	txType, err := lc.Classifier(context.Background(), sb.String(), string(summarized))
 	if err != nil {
 		log.Printf("Error on generate summary %s\n", err.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -97,7 +98,7 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 
 	prompt := lc.GetSummaryPrompt(*txType)
 
-	llmresponse, err := lc.Summary(context.Background(), prompt, string(summarizedString))
+	llmresponse, err := lc.Summary(context.Background(), prompt+sb.String(), string(summarized))
 
 	if err != nil {
 		log.Printf("Error on generate summary %s\n", err.Error())
@@ -105,7 +106,7 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	graphData, _ := buildGraphData(profile, addressLabels)
+	graphData, _ := buildGraphData(fundFlows, addrLabels)
 	responseSummury := ResponseSummury{
 		StatusMessage: "success",
 		Status:        1,
@@ -124,34 +125,28 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Transaction FundFlow와 Address Label을 기준으로 Cytoscape Graph Data 생성
-func buildGraphData(profile *fetcher.Profile, addressLabels *fetcher.AddressLabels) (*GraphData, error) {
+func buildGraphData(fundFlows tracer.FundFlows, addrLabels tracer.AddrLabels) (*GraphData, error) {
 
-	// Address Labels to map
-	labelMap := make(map[string]string)
-
-	for _, val := range addressLabels.Labels {
-		// 기존에 키가있는지 검사 하는것보다 무지성으로 때려 박는게 더 빠르지 않을까?
-		labelMap[val.Address] = val.Label
-	}
-
-	// node를 중복 없이 저장할 필요가 있지만 Set이 없기 때문에 Map으로 대체
-	nodeMap := make(map[string]struct{})
+	// node를 중복 없이 저장, addrLabel에는 Token Address의 정보도 함께 포함되어 있음
+	// Graph Node의 정보만 nodes에 추가
+	nodeMap := make(map[common.Address]struct{})
 	edges := []EdgeData{}
 
-	for _, val := range profile.FundFlows {
-		nodeMap[val.From] = struct{}{}
-		nodeMap[val.To] = struct{}{}
+	for idx, fundFlow := range fundFlows {
+		nodeMap[fundFlow.From] = struct{}{}
+		nodeMap[fundFlow.To] = struct{}{}
 
-		name := fmt.Sprintf("%s %s %s",
-			strconv.Itoa(val.ID),
-			shortenAmount(val.Amount),
-			labelMap[val.Token],
+		// edge에서 거래량과 Token 종류 표시
+		name := fmt.Sprintf("[%d] %s %s",
+			idx,
+			shortenAmount(decimal.NewFromBigInt(&fundFlow.Value, -(int32(addrLabels[fundFlow.Token].Decimals))).String()),
+			addrLabels[fundFlow.Token].Symbol,
 		)
 
 		edges = append(edges, EdgeData{
 			GraphEdge{
-				Source: val.From,
-				Target: val.To,
+				Source: fundFlow.From.Hex(),
+				Target: fundFlow.To.Hex(),
 				Name:   name,
 			}})
 	}
@@ -160,15 +155,15 @@ func buildGraphData(profile *fetcher.Profile, addressLabels *fetcher.AddressLabe
 
 	for key := range nodeMap {
 		var name string
-		if label, exist := labelMap[key]; exist {
-			name = fmt.Sprintf("%s(%s)", label, shortenAddress(key))
+		if label, exist := addrLabels[key]; exist {
+			name = fmt.Sprintf("%s(%s)", label.Label, shortenAddress(key.Hex()))
 		} else {
-			name = shortenAddress(key)
+			name = shortenAddress(key.Hex())
 		}
 
 		nodes = append(nodes, NodeData{
 			Data: GraphNode{
-				Id:   key,
+				Id:   key.Hex(),
 				Name: name,
 			},
 		})
@@ -199,5 +194,63 @@ func shortenAddress(address string) string {
 		return address
 	} else {
 		return fmt.Sprintf("%s...%s", address[0:7], address[len(address)-3:])
+	}
+}
+
+// FundFlows와 Address Label을 LLM에 넘겨줄 Summary 형태로 정리
+func flowSummary(fundFlows *tracer.FundFlows, addrLabels *tracer.AddrLabels) *summaryDesc {
+	// !!!Under construction
+
+	summaryProfile := summaryProfile{
+		Sender:        "",
+		Status:        true,
+		RevertMessage: "",
+	}
+
+	fundDescs := []FundDesc{}
+
+	for idx, fundflow := range *fundFlows {
+		var fromLabel string
+		var toLabel string
+		var token string
+		var tokenDecimal uint8
+
+		if v, exist := (*addrLabels)[fundflow.From]; exist {
+			fromLabel = v.Label
+		} else {
+			fromLabel = shortenAddress(fundflow.From.Hex())
+		}
+
+		if v, exsit := (*addrLabels)[fundflow.To]; exsit {
+			toLabel = v.Label
+		} else {
+			toLabel = shortenAddress(fundflow.From.Hex())
+		}
+
+		if v, exist := (*addrLabels)[fundflow.Token]; exist {
+			token = v.Symbol
+			tokenDecimal = v.Decimals
+		}
+
+		fundDesc := FundDesc{
+			Amount:     decimal.NewFromBigInt(&fundflow.Value, -(int32(tokenDecimal))).String(),
+			From:       fundflow.From.Hex(),
+			FromLabel:  fromLabel,
+			ID:         idx,
+			IsERC1155:  false,
+			IsERC721:   false,
+			IsReverted: false,
+			Order:      idx,
+			To:         fundflow.To.Hex(),
+			ToLabel:    toLabel,
+			Token:      token,
+		}
+		fundDescs = append(fundDescs, fundDesc)
+
+	}
+
+	return &summaryDesc{
+		SummaryProfile: summaryProfile,
+		FundDesc:       fundDescs,
 	}
 }

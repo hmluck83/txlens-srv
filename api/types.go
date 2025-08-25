@@ -36,3 +36,29 @@ type GraphEdge struct {
 	Target string `json:"target"`
 	Name   string `json:"name"`
 }
+
+// LLM에 질의 하기 위한 FundFlow Description -> FundFlow Structure 를 수정하여 생성
+type FundDesc struct {
+	Amount     string `json:"amount"`
+	From       string `json:"from"`
+	FromLabel  string `json:"fromLabel"`
+	ID         int    `json:"id"`
+	IsERC1155  bool   `json:"isERC1155"`
+	IsERC721   bool   `json:"isERC721"`
+	IsReverted bool   `json:"isReverted"`
+	Order      int    `json:"order"`
+	To         string `json:"to"`
+	ToLabel    string `json:"toLabel"`
+	Token      string `json:"token"`
+}
+
+type summaryProfile struct {
+	Sender        string `json:"sender"`
+	Status        bool   `json:"status"`
+	RevertMessage string `json:"revertMessage"`
+}
+
+type summaryDesc struct {
+	SummaryProfile summaryProfile `json:"summaryProfile"`
+	FundDesc       []FundDesc     `json:"fundDesc"`
+}

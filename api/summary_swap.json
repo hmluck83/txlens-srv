@@ -1,0 +1,75 @@
+{
+  "summaryProfile": {
+    "sender": "0x6cb83a93c763054242a14ee6d51efdca881b23d7",
+    "status": true,
+    "revertMessage": ""
+  },
+  "fundFlow": [
+    {
+      "amount": "0.15",
+      "from": "0x6cb83...3d7",
+      "id": 1,
+      "isERC1155": false,
+      "isERC721": false,
+      "isReverted": false,
+      "order": 1,
+      "to": "Uniswap: Universal Router(0x3fc91...fad)",
+      "token": "Ether"
+    },
+    {
+      "amount": "0.149025",
+      "from": "Uniswap: Universal Router(0x3fc91...fad)",
+      "id": 2,
+      "isERC1155": false,
+      "isERC721": false,
+      "isReverted": false,
+      "order": 2,
+      "to": "WETH(0xc02aa...cc2)",
+      "token": "Ether"
+    },
+    {
+      "amount": "0.149025",
+      "from": "WETH(0xc02aa...cc2)",
+      "id": 3,
+      "isERC1155": false,
+      "isERC721": false,
+      "isReverted": false,
+      "order": 3,
+      "to": "Uniswap: Universal Router(0x3fc91...fad)",
+      "token": "WETH"
+    },
+    {
+      "amount": "0.149025",
+      "from": "Uniswap: Universal Router(0x3fc91...fad)",
+      "id": 4,
+      "isERC1155": false,
+      "isERC721": false,
+      "isReverted": false,
+      "order": 4,
+      "to": "UniswapV2Pair(0xb9ba5...76f)",
+      "token": "WETH"
+    },
+    {
+      "amount": "39,044,948.453537507",
+      "from": "UniswapV2Pair(0xb9ba5...76f)",
+      "id": 5,
+      "isERC1155": false,
+      "isERC721": false,
+      "isReverted": false,
+      "order ": 5,
+      "to": "0x6cb83...3d7",
+      "token": "VALENTINE"
+    },
+    {
+      "amount": "0.000975",
+      "from": "Uniswap: Universal Router(0x3fc91...fad)",
+      "id": 6,
+      "isERC1155": false,
+      "isERC721": false,
+      "isReverted": false,
+      "order": 6,
+      "to": "GnosisSafeProxy(0xa74fa...9ee)",
+      "token": "Ether"
+    }
+  ]
+}

@@ -1,90 +1,12 @@
 package llmclient
 
 import (
-	"bytes"
 	"context"
-	"embed"
 	_ "embed"
 	"os"
 
 	"google.golang.org/genai"
 )
-
-//go:embed prompts/templates
-var templates embed.FS
-
-var summarySwapPrompt string
-var summaryDepositCex string
-var summaryWithdrawCex string
-var summarySimpleTrans string
-var classifierPrompt string
-var addressPrompt string
-
-var ClassificationEnum []string
-
-func init() {
-	ClassificationEnum = []string{
-		"Withdraw_From_CentralizedExchange",
-		"Deposit_To_CentralizedExchange",
-		"Simple_Transfer",
-		"Swap_Transaction",
-	}
-
-	// build template strings
-	personaSummary, _ := templates.ReadFile("prompts/templates/persona_summary.tmpl")
-	personaClassification, _ := templates.ReadFile("prompts/templates/persona_classification.tmpl")
-
-	instructionSummary, _ := templates.ReadFile("prompts/templates/instruction_summary.tmpl")
-	instructionClassification, _ := templates.ReadFile("prompts/templates/instruction_classification.tmpl")
-
-	transactionTemplate, _ := templates.ReadFile("prompts/templates/transaction_template.tmpl")
-
-	infoSwap, _ := templates.ReadFile("prompts/templates/info_swap.tmpl")
-	infoDepositCex, _ := templates.ReadFile("prompts/templates/info_depositCEX.tmpl")
-	infoWithdrawCex, _ := templates.ReadFile("prompts/templates/info_withdrawCEX.tmpl")
-
-	at, _ := templates.ReadFile("prompts/templates/address_prompt.tmpl")
-	addressPrompt = string(at)
-
-	// TODO: 분명히 개선될거 같은데
-	cp := bytes.Buffer{}
-	cp.Write(personaClassification)
-	cp.Write(transactionTemplate)
-	cp.Write(instructionClassification)
-
-	classifierPrompt = cp.String()
-
-	swapPrompt := bytes.Buffer{}
-	swapPrompt.Write(personaSummary)
-	swapPrompt.Write(transactionTemplate)
-	swapPrompt.Write(instructionSummary)
-	swapPrompt.Write(infoSwap)
-
-	summarySwapPrompt = swapPrompt.String()
-
-	depositCex := bytes.Buffer{}
-	depositCex.Write(personaSummary)
-	depositCex.Write(transactionTemplate)
-	depositCex.Write(instructionSummary)
-	depositCex.Write(infoDepositCex)
-
-	summaryDepositCex = depositCex.String()
-
-	withdrawCex := bytes.Buffer{}
-	withdrawCex.Write(personaSummary)
-	withdrawCex.Write(transactionTemplate)
-	withdrawCex.Write(instructionSummary)
-	withdrawCex.Write(infoWithdrawCex)
-
-	summaryWithdrawCex = withdrawCex.String()
-
-	simpleTrans := bytes.Buffer{}
-	simpleTrans.Write(personaSummary)
-	simpleTrans.Write(transactionTemplate)
-	simpleTrans.Write(instructionSummary)
-
-	summarySimpleTrans = simpleTrans.String()
-}
 
 type LLMClient struct {
 	APIkey       string
@@ -142,12 +64,12 @@ func (l *LLMClient) Summary(ctx context.Context, prompt string, inquiry string) 
 }
 
 // TODO !TODO
-func (l *LLMClient) Classifier(ctx context.Context, inquiry string) (*string, error) {
+func (l *LLMClient) Classifier(ctx context.Context, addrPrompt string, inquiry string) (*string, error) {
 
 	zeroPointer := int32(0)
 
 	config := &genai.GenerateContentConfig{
-		SystemInstruction: genai.NewContentFromText(classifierPrompt, genai.RoleUser),
+		SystemInstruction: genai.NewContentFromText(classifierPrompt+addrPrompt, genai.RoleUser),
 		ThinkingConfig: &genai.ThinkingConfig{
 			ThinkingBudget: &zeroPointer,
 		},
@@ -179,7 +101,7 @@ func (l *LLMClient) Classifier(ctx context.Context, inquiry string) (*string, er
 func (l *LLMClient) AddressPrompting(ctx context.Context, inquiry string) (*string, error) {
 
 	// Config Thinking budget
-	thinkingBudget := int32(1024)
+	thinkingBudget := int32(0)
 	temparature := float32(0.3)
 
 	config := &genai.GenerateContentConfig{
@@ -207,7 +129,6 @@ func (l *LLMClient) AddressPrompting(ctx context.Context, inquiry string) (*stri
 	}
 
 	text := result.Text()
-
 	return &text, nil
 }
 
@@ -221,6 +142,10 @@ func (l *LLMClient) GetSummaryPrompt(txtype string) string {
 		return summarySimpleTrans
 	case "Swap_Transaction":
 		return summarySwapPrompt
+	case "Withdraw_From_Bridge":
+		return summaryWithdrawBridge
+	case "Deposit_To_Bridge":
+		return summaryDepositBridge
 	}
 
 	return "" // Never
