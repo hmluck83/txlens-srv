@@ -3,6 +3,7 @@ package llmclient
 import (
 	"context"
 	_ "embed"
+	"log"
 	"os"
 
 	"google.golang.org/genai"
@@ -129,6 +130,7 @@ func (l *LLMClient) AddressPrompting(ctx context.Context, inquiry string) (*stri
 	}
 
 	text := result.Text()
+	log.Printf("Address Prompting Success %s \n", text)
 	return &text, nil
 }
 

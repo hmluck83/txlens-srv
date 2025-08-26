@@ -76,6 +76,7 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 			go func() {
 				defer wg.Done()
 				// 현재 addr Prompt 생성중 에러는 무시
+				log.Printf("Address Prompting Coroutine 시작: %s\n", keyAddr.Hex())
 				addrPrompt, _ := lc.AddressPrompting(context.Background(), keyAddr.Hex())
 
 				mu.Lock()
@@ -84,6 +85,8 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 			}()
 		}
 	}
+
+	wg.Wait()
 
 	log.Printf("Address Prompt:\n%s\n", sb.String())
 
