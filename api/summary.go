@@ -20,7 +20,6 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 
 	/* TODO List
 	[ ] Verifing chainID
-	[ ] Verifing Ethereum Transaction
 	*/
 
 	// CORS 헤더 설정
@@ -86,6 +85,8 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Printf("Address Prompt:\n%s\n", sb.String())
+
 	txFlowSummary := flowSummary(&fundFlows, &addrLabels)
 	summarized, err := json.Marshal(txFlowSummary)
 
@@ -95,6 +96,8 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("Transaction Type: %s\n", *txType)
 
 	prompt := lc.GetSummaryPrompt(*txType)
 
@@ -120,8 +123,6 @@ func summuryHandler(w http.ResponseWriter, r *http.Request) {
 	if err := encoder.Encode(responseSummury); err != nil {
 		log.Printf("Error encoding response JSON: %s\n", err)
 	}
-
-	log.Printf("Summary String is : \n%s\n", responseSummury.Description)
 }
 
 // Transaction FundFlow와 Address Label을 기준으로 Cytoscape Graph Data 생성
