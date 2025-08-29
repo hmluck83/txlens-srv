@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tx Lens</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mermaid.js for graph rendering -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/mermaid@10.8.0/dist/mermaid.min.js"></script> -->
+    <!-- Cytoscape.js for graph rendering -->
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    <script src="web/cytoscape-euler.js"></script>
+    <!-- Markdown-it for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* 동적으로 생성되는 Markdown 콘텐츠 스타일 */
+        #markdownContent h2 {
+            /* "Markdown 결과" (text-2xl) 보다 작은 크기 (text-xl) */
+            font-size: 1.25rem; /* 20px */
+            line-height: 1.75rem;
+            font-weight: 600; /* semibold */
+            text-align: left;
+            color: #E5E7EB; /* gray-200 */
+            margin-top: 1.5rem; /* 위쪽 여백 추가 */
+            margin-bottom: 0.75rem; /* 아래쪽 여백 추가 */
+        }
+        #markdownContent p {
+            text-align: justify;
+            /* 단어 단위가 아닌 글자 단위로 줄바꿈 */
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- Main Container -->
+    <div class="bg-gray-800 p-8 rounded-5xl shadow-5xl w-full max-w-5xl text-center">
+        <div class="flex flex-col md:flex-row md:items-center justify-between">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-4 md:mb-0">Tx Lens</h1>
+            <!-- New Search Bar Section -->
+            <div id="searchBar" class="flex items-center space-x-2 w-full md:w-auto">
+                <input
+                    type="text"
+                    id="txidInput"
+                    placeholder="트랜잭션 ID 입력..."
+                    class="bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-xl py-2 px-4 focus:outline-none focus:border-purple-500 transition-all duration-300 placeholder-gray-400 flex-grow md:w-[40rem]"
+                />
+                <button
+                    id="searchBtn"
+                    class="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 w-16 h-10 flex items-center justify-center"
+                >
+                    <svg id="searchIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <svg id="loadingIcon" class="animate-spin h-6 w-6 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Result Content (Initially Hidden) -->
+        <div id="resultContent" class="mt-6 space-y-6 hidden">
+            <!-- Mermaid Graph Section -->
+            <div class="bg-gray-900 p-6 rounded-2xl shadow-xl flex-shrink-0">
+                <h2 id="mermaidHeader" class="text-2xl font-bold mb-4 text-gray-200 cursor-pointer select-none flex justify-between items-center">
+                    Mermaid Graph
+                    <svg id="mermaidArrow" class="w-6 h-6 transform transition-transform duration-300 rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </h2>
+                <div id="mermaidContentWrapper" class="overflow-hidden transition-all duration-300" style="height: 640px;">
+                    <div id="mermaidContainer" class="overflow-auto h-[580px] border-2 border-gray-700 rounded-xl p-4">
+                        <!-- <pre id="mermaidGraph" class="mermaid text-center text-gray-400">데이터를 불러오는 중...</pre> -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Markdown Section -->
+            <div class="bg-gray-900 p-6 rounded-2xl shadow-xl flex-grow overflow-y-auto">
+                <h2 id="markdownHeader" class="text-2xl font-bold mb-4 text-gray-200 cursor-pointer select-none flex justify-between items-center">
+                    Markdown 결과
+                    <svg id="markdownArrow" class="w-6 h-6 transform transition-transform duration-300 rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </h2>
+                <div id="markdownContentWrapper" class="overflow-hidden transition-all duration-300" style="height: auto;">
+                    <div id="markdownContent" class="prose prose-invert max-w-none text-gray-300">
+                        <p>데이터를 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Error Messages -->
+    <div id="errorModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <h3 class="text-xl font-bold text-red-400 mb-4">오류 발생</h3>
+            <p id="modalMessage" class="text-gray-300 mb-6"></p>
+            <button id="modalCloseBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                닫기
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const txidInput = document.getElementById('txidInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const resultContent = document.getElementById('resultContent');
+            
+            // const mermaidGraphElement = document.getElementById('mermaidGraph');
+            const mermaidGraphElement = document.getElementById('mermaidContainer');
+            const markdownContentElement = document.getElementById('markdownContent');
+            const mermaidHeader = document.getElementById('mermaidHeader');
+            const markdownHeader = document.getElementById('markdownHeader');
+            const mermaidContentWrapper = document.getElementById('mermaidContentWrapper');
+            const markdownContentWrapper = document.getElementById('markdownContentWrapper');
+            const mermaidArrow = document.getElementById('mermaidArrow');
+            const markdownArrow = document.getElementById('markdownArrow');
+
+            const errorModal = document.getElementById('errorModal');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+            const searchIcon = document.getElementById('searchIcon');
+            const loadingIcon = document.getElementById('loadingIcon');
+            
+            // Show a message in the modal
+            const showModalMessage = (text) => {
+                modalMessage.textContent = text;
+                errorModal.classList.remove('hidden');
+            };
+            
+            // Close the modal
+            modalCloseBtn.addEventListener('click', () => {
+                errorModal.classList.add('hidden');
+            });
+
+            const toggleSection = (wrapper, arrow) => {
+                const isHidden = wrapper.style.height === '0px';
+                if (isHidden) {
+                    wrapper.style.height = wrapper.scrollHeight + 'px';
+                    arrow.classList.remove('rotate-180');
+                } else {
+                    wrapper.style.height = '0px';
+                    arrow.classList.add('rotate-180');
+                }
+            };
+            
+            mermaidHeader.addEventListener('click', () => {
+                toggleSection(mermaidContentWrapper, mermaidArrow);
+            });
+
+            markdownHeader.addEventListener('click', () => {
+                toggleSection(markdownContentWrapper, markdownArrow);
+            });
+
+            const fetchData = async (txid) => {
+                searchBtn.disabled = true;
+                txidInput.placeholder = '데이터를 가져오는 중...';
+                searchIcon.classList.add('hidden');
+                loadingIcon.classList.remove('hidden');
+
+                const payload = {
+                    chainID: 1,
+                    txid: txid
+                };
+
+                try {
+                    const response = await fetch('http://localhost:7814', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`서버 응답 오류: ${response.status} ${response.statusText} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // Show the results section
+                    resultContent.classList.remove('hidden');
+
+                    // // Render the Mermaid graph
+                    // if (data.mermaidGraph) {
+                    //     mermaidGraphElement.textContent = data.mermaidGraph;
+                    //     mermaid.init(undefined, mermaidGraphElement);
+                    // } else {
+                    //     mermaidGraphElement.textContent = 'Mermaid 그래프 데이터가 없습니다.';
+                    // }
+
+                    // Render Cytoscape graph
+                    if (data.graphdata) {
+                        // cytoscape.use(euler);
+                        let cy = (window.cy = cytoscape({
+                            container: mermaidGraphElement,
+                            layout: {
+                                name: "euler",
+                                animate: false,
+                            },
+                            style: [
+                                {
+                                    selector: "node",
+                                    style: {
+                                        content: "data(name)",
+                                        "text-valign": "center",
+                                        color: "white",
+                                        "text-outline-width": 1,
+                                        "text-outline-color": "#000",
+                                        "background-color": "#888",
+                                        width: 16,
+                                        height: 16,
+                                    },
+                                },
+                                {
+                                    selector: "edge",
+                                    style: {
+                                        "target-arrow-shape": "triangle",
+                                        "target-arrow-fill": "hollow",
+                                        width: 3,
+                                        content: "data(name)",
+                                        "curve-style": "bezier", // Or 'straight'
+                                        color: "gray",
+                                        "text-outline-width": 2,
+                                        "text-outline-color": "#000"
+                                    },
+                                },
+                            ],
+
+                            elements: data.graphdata,
+                        }));
+                    }
+
+                    // Render the Markdown content
+                    if (data.description) {
+                        const htmlContent = marked.parse(data.description);
+                        markdownContentElement.innerHTML = htmlContent;
+                    } else {
+                        markdownContentElement.innerHTML = '<p>Markdown 데이터가 없습니다.</p>';
+                    }
+                    
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    showModalMessage(`데이터를 가져오는 데 실패했습니다: ${error.message}`);
+                } finally {
+                    searchBtn.disabled = false;
+                    txidInput.placeholder = '새로운 트랜잭션 ID 입력...';
+                    loadingIcon.classList.add('hidden');
+                    searchIcon.classList.remove('hidden');
+                }
+            };
+
+            searchBtn.addEventListener('click', () => {
+                const txid = txidInput.value.trim();
+                if (!txid) {
+                    showModalMessage('트랜잭션 ID를 입력해주세요.');
+                    return;
+                }
+                fetchData(txid);
+            });
+
+        });
+    </script>
+</body>
+</html>

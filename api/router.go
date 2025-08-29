@@ -25,6 +25,8 @@ func NewRouter() *routeHttp {
 
 func (rh *routeHttp) Run() {
 	http.HandleFunc("/", summuryHandler)
+	http.HandleFunc("/web", webUiHandler)
+	http.HandleFunc("/web/cytoscape-euler.js", eulerHandler)
 
 	go func() {
 		log.Printf("Server staring on %s\n", rh.server.Addr)
