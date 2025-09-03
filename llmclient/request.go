@@ -50,7 +50,7 @@ func (l *LLMClient) Summary(ctx context.Context, prompt string, inquiry string) 
 
 	result, err := l.geminiClient.Models.GenerateContent(
 		ctx,
-		"gemini-2.5-flash-lite-preview-06-17", // ch Model name
+		"gemini-2.5-flash", // ch Model name
 		genai.Text(inquiry),
 		config,
 	)
@@ -84,7 +84,7 @@ func (l *LLMClient) Classifier(ctx context.Context, addrPrompt string, inquiry s
 
 	result, err := l.geminiClient.Models.GenerateContent(
 		ctx,
-		"gemini-2.5-flash-lite-preview-06-17",
+		"gemini-2.5-flash",
 		genai.Text(inquiry),
 		config,
 	)
@@ -120,7 +120,7 @@ func (l *LLMClient) AddressPrompting(ctx context.Context, inquiry string) (*stri
 
 	result, err := l.geminiClient.Models.GenerateContent(
 		ctx,
-		"gemini-2.5-flash",
+		"gemini-2.5-flash-lite",
 		genai.Text(inquiry),
 		config,
 	)

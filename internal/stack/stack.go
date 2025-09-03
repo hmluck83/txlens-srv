@@ -2,6 +2,7 @@ package stack
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 )
 
 // github.com/golang-collections
@@ -11,10 +12,15 @@ type (
 		length int
 	}
 	node struct {
-		value *common.Address
+		value *callAddr
 		prev  *node
 	}
 )
+
+type callAddr struct {
+	Addr     *common.Address
+	Calltype vm.OpCode
+}
 
 // Create a new stack
 func NewStack() *Stack {
@@ -22,33 +28,42 @@ func NewStack() *Stack {
 }
 
 // Return the number of items in the stack
-func (this *Stack) Len() int {
-	return this.length
+func (s *Stack) Len() int {
+	return s.length
 }
 
 // View the top item on the stack
-func (this *Stack) Peek() *common.Address {
-	if this.length == 0 {
-		return nil
+func (s *Stack) Peek() *common.Address {
+	c := s.top
+
+	for c != nil {
+		if c.value.Calltype != vm.DELEGATECALL {
+			return c.value.Addr
+		} else {
+			c = c.prev
+		}
 	}
-	return this.top.value
+
+	return nil
 }
 
 // Pop the top item of the stack and return it
-func (this *Stack) Pop() *common.Address {
-	if this.length == 0 {
+func (s *Stack) Pop() *common.Address {
+	// Pop 데이터를 별도로 활용하지 않음
+	if s.length == 0 {
 		return nil
 	}
 
-	n := this.top
-	this.top = n.prev
-	this.length--
-	return n.value
+	n := s.top
+	s.top = n.prev
+	s.length--
+	return n.value.Addr
 }
 
 // Push a value onto the top of the stack
-func (this *Stack) Push(value *common.Address) {
-	n := &node{value, this.top}
-	this.top = n
-	this.length++
+func (s *Stack) Push(value *common.Address, op vm.OpCode) {
+	cAddr := &callAddr{value, op}
+	n := &node{cAddr, s.top}
+	s.top = n
+	s.length++
 }

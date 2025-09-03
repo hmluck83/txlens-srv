@@ -80,7 +80,7 @@ func FundFlowFromTx(txHash common.Hash) (FundFlows, AddrLabels, error) {
 	}
 
 	addressStack := stack.NewStack()
-	addressStack.Push(tx.To())
+	addressStack.Push(tx.To(), vm.CALL)
 
 	// 현재 이용하는 RPC-NODE가 개복치 같아, 자꾸 죽어버린다. 어쩔 수 없이
 	// 마감을 앞두고 있는 상황에서 땜빵한다
@@ -119,7 +119,7 @@ func FundFlowFromTx(txHash common.Hash) (FundFlows, AddrLabels, error) {
 
 		case vm.CALLCODE, vm.DELEGATECALL, vm.STATICCALL:
 			pushedAddress := common.BytesToAddress(val.Stack[len(val.Stack)-2].Bytes())
-			addressStack.Push(&pushedAddress)
+			addressStack.Push(&pushedAddress, val.Op)
 
 		case vm.RETURN, vm.REVERT, vm.STOP:
 			addressStack.Pop()
@@ -127,6 +127,7 @@ func FundFlowFromTx(txHash common.Hash) (FundFlows, AddrLabels, error) {
 		case vm.LOG3: // ERC20 Transfer
 			topic1 := stackOffsetValue(val, 3)
 			if topic1.Cmp(transferLog) == 0 {
+
 				from := stackOffsetValue(val, 4)
 				to := stackOffsetValue(val, 5)
 				value := transferValue(val)
